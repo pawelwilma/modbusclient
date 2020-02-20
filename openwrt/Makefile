@@ -5,11 +5,17 @@
 # See /LICENSE for more information.
 #
 
+# ----------------------------------------------------------------------------
+# "THE BEER-WARE LICENSE" (Revision 42):
+# <pwilma@wp.pl> wrote this file.  As long as you retain this notice you
+# can do whatever you want with this stuff. If we meet some day, and you think
+# this stuff is worth it, you can buy me a beer in return.               Pawel
+# ----------------------------------------------------------------------------
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modbusclient
 PKG_RELEASE:=1
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=Beerware
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,7 +31,7 @@ TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include
 TARGET_LIBS += -lmodbus
 
 ifneq ($(CONFIG_USE_GLIBC),)
-    TARGET_CFLAGS += -D_DEFAULT_SOURCE -lmodbus
+    TARGET_CFLAGS += -D_DEFAULT_SOURCE
 endif
 
 define Build/Compile
