@@ -29,26 +29,27 @@ int toInt(const char *str, int *err) {
     return (int)val;
 }
 
-int getWriteValues(uint16_t *tab_reg, int num_regs, char **argv) {
+int getWriteValues(uint16_t *tab_reg, int num_regs, char *str) {
 
     char *token = NULL;
-    char *savePtr = NULL;
-    int err;
+    char *save_ptr = NULL;
+    int err = 0;
     int i = 0;
     do {
-        if (i == num_regs) {
+        if (i >= num_regs) {
             fprintf(stderr, "ERROR: too much values. Expected : %d\n",
                     num_regs);
             return -1;
         }
-        token = strtok_r(argv[5], ",", &savePtr);
+        token = strtok_r(str, ",", &save_ptr);
         tab_reg[i] = toInt(token, &err);
         if (err) {
             fprintf(stderr, "ERROR: parsing value failed: %s\n", token);
             return -1;
         }
         i++;
-    } while (token != NULL);
+        str = NULL;
+    } while (save_ptr != NULL && save_ptr[0] != 0);
 
     if (i < num_regs) {
         fprintf(stderr, "ERROR: not enough values. Expected %d, got %d\n",
@@ -94,10 +95,10 @@ int parseArgs(int argc, char **argv, char **host_ip, int *port, mode_type *mode,
         return err;
     }
     // Number of registers to read/write
-    *num_regs = toInt(argv[4], &err);
+    *num_regs = toInt(argv[5], &err);
     if (err) {
         fprintf(stderr, "ERROR: error parsing number of registers to %s: %s\n",
-                (*mode == READ ? "read" : "write"), argv[4]);
+                (*mode == READ ? "read" : "write"), argv[5]);
         return err;
     }
 
@@ -105,6 +106,10 @@ int parseArgs(int argc, char **argv, char **host_ip, int *port, mode_type *mode,
         fprintf(stderr, "ERROR: missing write values\n");
         return -1;
     }
+
+    // printf("Parameters: host: %s port :%d mode: %s start: %d num: %d %s\n",
+    //       *host_ip, *port, (*mode == READ ? "READ" : "WRITE"), *start,
+    //       *num_regs, (*mode == READ ? "" : argv[6]));
 
     return 0;
 }
@@ -118,7 +123,7 @@ int main(int argc, char **argv) {
     int start = 0;
     int num_regs = 0;
     char *host_ip;
-    int port = 1502;
+    int port = 502;
     mode_type mode = READ;
 
     rc = parseArgs(argc, argv, &host_ip, &port, &mode, &start, &num_regs);
@@ -137,7 +142,7 @@ int main(int argc, char **argv) {
     }
 
     if (mode == WRITE) {
-        rc = getWriteValues(tab_reg, num_regs, argv);
+        rc = getWriteValues(tab_reg, num_regs, argv[6]);
         if (rc != 0) {
             goto ErrorHandler;
         }
@@ -157,8 +162,8 @@ int main(int argc, char **argv) {
     } else {
         rc = modbus_write_registers(ctx, start, num_regs, tab_reg);
     }
-    if (rc != 0) {
-        fprintf(stderr, "ERROR: %s\n", modbus_strerror(errno));
+    if (rc != num_regs) {
+        fprintf(stderr, "ERROR (rc = %d): %s\n", rc, modbus_strerror(errno));
         rc = -1;
         goto ErrorHandler;
     }
